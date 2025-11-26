@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Chat } from "@google/genai";
@@ -23,13 +22,17 @@ const TEXTS = {
     restartBtn: "重新开始 / 切换语言",
     startBtnZh: "简体中文 / Chinese",
     startBtnEn: "English",
-    errorInit: "系统启动失败，请刷新重试。",
+    errorInit: "系统启动失败。",
+    errorInitTip: "请检查 API Key 配置或网络连接。",
     errorChat: "连接中断，请重试。",
     zoomReset: "重置",
     chuckyTitle: "关键人物：Chucky",
     chuckyRelation: "关系好感",
     chuckyRole: "当前定位",
     chuckyTrust: "信任度",
+    apiKeyMissing: "⚠️ 未检测到 API Key",
+    apiKeyTip1: "游戏无法连接到 AI 模型。",
+    apiKeyTip2: "如果您正在使用 Vercel 部署，请前往项目设置 (Settings) -> 环境变量 (Environment Variables)，添加名为 API_KEY 的变量。",
   },
   en: {
     appTitle: "🐷 GGbond Life Simulator",
@@ -46,13 +49,17 @@ const TEXTS = {
     restartBtn: "Restart / Change Language",
     startBtnZh: "简体中文 / Chinese",
     startBtnEn: "English",
-    errorInit: "System failed to start. Please refresh.",
+    errorInit: "System failed to start.",
+    errorInitTip: "Check API Key configuration or network.",
     errorChat: "Connection lost. Please try again.",
     zoomReset: "Reset",
     chuckyTitle: "Key Character: Chucky",
     chuckyRelation: "Affinity",
     chuckyRole: "Current Role",
     chuckyTrust: "Trust",
+    apiKeyMissing: "⚠️ API Key Not Detected",
+    apiKeyTip1: "The game cannot connect to the AI model.",
+    apiKeyTip2: "If deploying on Vercel, go to Project Settings -> Environment Variables and add a variable named API_KEY.",
   }
 };
 
@@ -600,7 +607,11 @@ const ZoomControl = ({ onZoomIn, onZoomOut, onReset, resetText }: { onZoomIn: ()
   );
 };
 
-const StartScreen = ({ onStart }: { onStart: (lang: Language) => void }) => {
+const StartScreen = ({ onStart, hasApiKey }: { onStart: (lang: Language) => void; hasApiKey: boolean }) => {
+  const [tempLang, setTempLang] = useState<Language>('zh');
+  const t = TEXTS[tempLang]; // Use tempLang for immediate feedback or default
+
+  // Simple toggle for preview text if key is missing, or just default to ZH
   return (
     <div style={{
       position: 'fixed',
@@ -629,44 +640,70 @@ const StartScreen = ({ onStart }: { onStart: (lang: Language) => void }) => {
           <h2 style={{ color: '#333', fontSize: '1.2em', marginBottom: '4px' }}>模拟人生</h2>
           <h3 style={{ color: '#666', fontSize: '1em', fontWeight: 'normal', marginBottom: '32px' }}>Life Simulator</h3>
 
-          <p style={{ color: '#888', marginBottom: '24px', fontStyle: 'italic' }}>
-            缔造属于你的男神传奇<br/>
-            Create Your Own Legend
-          </p>
+          {hasApiKey ? (
+            <>
+              <p style={{ color: '#888', marginBottom: '24px', fontStyle: 'italic' }}>
+                缔造属于你的男神传奇<br/>
+                Create Your Own Legend
+              </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-             <button 
-                onClick={() => onStart('zh')}
-                style={{
-                  padding: '16px',
-                  backgroundColor: '#d32f2f',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontSize: '1.1em',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 10px rgba(211, 47, 47, 0.3)',
-                  transition: 'transform 0.2s'
-                }}
-             >
-                简体中文
-             </button>
-             <button 
-                onClick={() => onStart('en')}
-                style={{
-                  padding: '16px',
-                  backgroundColor: '#fff',
-                  color: '#333',
-                  border: '2px solid #ddd',
-                  borderRadius: '12px',
-                  fontSize: '1.1em',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s'
-                }}
-             >
-                English
-             </button>
-          </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                 <button 
+                    onClick={() => onStart('zh')}
+                    style={{
+                      padding: '16px',
+                      backgroundColor: '#d32f2f',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '1.1em',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 10px rgba(211, 47, 47, 0.3)',
+                      transition: 'transform 0.2s'
+                    }}
+                 >
+                    简体中文
+                 </button>
+                 <button 
+                    onClick={() => onStart('en')}
+                    style={{
+                      padding: '16px',
+                      backgroundColor: '#fff',
+                      color: '#333',
+                      border: '2px solid #ddd',
+                      borderRadius: '12px',
+                      fontSize: '1.1em',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                 >
+                    English
+                 </button>
+              </div>
+            </>
+          ) : (
+             <div style={{
+                 backgroundColor: '#ffebee',
+                 color: '#c62828',
+                 padding: '16px',
+                 borderRadius: '8px',
+                 border: '1px solid #ef9a9a',
+                 textAlign: 'left',
+                 fontSize: '0.9em'
+             }}>
+                 <strong style={{ display: 'block', marginBottom: '8px', fontSize: '1.1em' }}>{t.apiKeyMissing}</strong>
+                 <p style={{ margin: '0 0 8px 0' }}>{t.apiKeyTip1}</p>
+                 <p style={{ margin: 0 }}>{t.apiKeyTip2}</p>
+                 <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                    <button 
+                        onClick={() => setTempLang(l => l === 'zh' ? 'en' : 'zh')}
+                        style={{ background: 'none', border: 'none', color: '#c62828', textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                        Switch Language (中文/English)
+                    </button>
+                 </div>
+             </div>
+          )}
        </div>
     </div>
   );
@@ -683,11 +720,25 @@ const GameApp = () => {
   const [chuckyState, setChuckyState] = useState<ChuckyState>({ isMet: false, relation: 0, trust: 0, role: '' });
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [fontSize, setFontSize] = useState(16);
+  const [hasApiKey, setHasApiKey] = useState(true);
   
   const chatRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const t = TEXTS[language];
+
+  // Check for API key on mount
+  useEffect(() => {
+    let keyExists = false;
+    try {
+        if (process.env.API_KEY) {
+            keyExists = true;
+        }
+    } catch (e) {
+        // process is undefined
+    }
+    setHasApiKey(keyExists);
+  }, []);
 
   const initGame = async (lang: Language) => {
     setIsLoading(true);
@@ -696,7 +747,18 @@ const GameApp = () => {
     setChuckyState({ isMet: false, relation: 0, trust: 0, role: '' });
     
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      let apiKey;
+      try {
+        apiKey = process.env.API_KEY;
+      } catch (e) {
+      }
+
+      if (!apiKey) {
+        // Double check fail safe, though UI handles it
+        throw new Error("API_KEY environment variable is missing.");
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       const chat = ai.chats.create({
         model: 'gemini-2.5-flash',
         config: {
@@ -712,9 +774,11 @@ const GameApp = () => {
       parseAndSetState(text);
       
       setMessages([{ role: 'model', text: text, options: extractOptions(text) }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Initialization error:", error);
-      setMessages([{ role: 'model', text: t.errorInit }]);
+      const errorMsg = error.message || String(error);
+      const displayError = `${t.errorInit}\n${t.errorInitTip}\n[Detail]: ${errorMsg}`;
+      setMessages([{ role: 'model', text: displayError }]);
     } finally {
       setIsLoading(false);
     }
@@ -739,6 +803,8 @@ const GameApp = () => {
   }, [messages]);
 
   const parseAndSetState = (text: string) => {
+    if (!text) return;
+
     // 1. Extract General Stats
     const statusLineMatch = text.match(/(?:【状态】|\[STATUS\])(.*?)(?:\n|$)/);
     
@@ -779,6 +845,7 @@ const GameApp = () => {
   };
 
   const extractOptions = (text: string) => {
+    if (!text) return undefined;
     // Look for lines starting with "1)" or "1." or "1）"
     const lines = text.split('\n');
     const options: string[] = [];
@@ -821,7 +888,7 @@ const GameApp = () => {
   const handleResetZoom = () => setFontSize(16);
 
   if (!hasStarted) {
-      return <StartScreen onStart={handleStart} />;
+      return <StartScreen onStart={handleStart} hasApiKey={hasApiKey} />;
   }
 
   return (
