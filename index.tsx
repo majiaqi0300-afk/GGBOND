@@ -32,7 +32,7 @@ const TEXTS = {
     chuckyTrust: "信任度",
     apiKeyMissing: "⚠️ 未检测到 API Key",
     apiKeyTip1: "游戏无法连接到 AI 模型。",
-    apiKeyTip2: "如果您正在使用 Vercel 部署，请前往项目设置 (Settings) -> 环境变量 (Environment Variables)，添加名为 API_KEY 的变量。",
+    apiKeyTip2: "请检查环境变量配置，确保 API_KEY 已正确设置。",
   },
   en: {
     appTitle: "🐷 GGbond Life Simulator",
@@ -59,7 +59,7 @@ const TEXTS = {
     chuckyTrust: "Trust",
     apiKeyMissing: "⚠️ API Key Not Detected",
     apiKeyTip1: "The game cannot connect to the AI model.",
-    apiKeyTip2: "If deploying on Vercel, go to Project Settings -> Environment Variables and add a variable named API_KEY.",
+    apiKeyTip2: "Please check your environment variables and ensure API_KEY is set correctly.",
   }
 };
 
@@ -727,7 +727,7 @@ const GameApp = () => {
 
   const t = TEXTS[language];
 
-  // Check for API key on mount
+  // Check for API key on mount using process.env.API_KEY
   useEffect(() => {
     let keyExists = false;
     try {
@@ -735,7 +735,7 @@ const GameApp = () => {
             keyExists = true;
         }
     } catch (e) {
-        // process is undefined
+        // env access failed
     }
     setHasApiKey(keyExists);
   }, []);
@@ -747,18 +747,14 @@ const GameApp = () => {
     setChuckyState({ isMet: false, relation: 0, trust: 0, role: '' });
     
     try {
-      let apiKey;
-      try {
-        apiKey = process.env.API_KEY;
-      } catch (e) {
-      }
+      const apiKey = process.env.API_KEY;
 
       if (!apiKey) {
         // Double check fail safe, though UI handles it
         throw new Error("API_KEY environment variable is missing.");
       }
 
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const chat = ai.chats.create({
         model: 'gemini-2.5-flash',
         config: {
